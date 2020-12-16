@@ -8,77 +8,161 @@ This is just the script to generate the square plate
 import numpy as np
 import matplotlib.pyplot as plt
 #from mpl_toolkits.mplot3d import Axes3D
-from PHY407_Functions import *
+from PHY407_Functions import Gaussian, FDLaplaceEstimate, GetNextP
 import scipy.linalg
 
 
 
+
 # %% Parameters
-L = 1.0 # length of the square
-N = 20 # grid size
+Lx= 1.0 # length of the square
+Ly = 1.0
+nx = 200 # grid size
+ny = 200
+
+# nx = 3
+# ny = 3
 #N test
 #N = 5
-a = 1 # amplitude initial conditions
-b = 1 
-m = 2 # modes
-n = 2 # modes
-time = 10 # time scale
-dt = 0.5  # time grid
-time = np.arange(0, time+dt, dt)
-T = 1 
-sigma = 1 
+v = 30 # constant wave velocity
 
 
-# %% Initial Value Conditions
-x = np.linspace(0, 1, N)
-y = np.linspace(0, 1, N)
+
+# %% creating arrays
+
+#space arrays for functions
+x = np.linspace(0, Lx,nx)
+y = np.linspace(0, Ly, ny)
 dx = x[1]-x[0]
 X, Y = np.meshgrid(x, y)
+time = 10 # time scale
+dt = 0.1 # time grid
+time = np.arange(0, time+dt, dt)
 
-# Initial Condition (Make sure Boundary is set)
-Z0 = getAnalyticEigenmode(m, n, a, b, X, Y)
-D = getDynamicMatrixSquare(N)
 
-# %% Computing Eigenmodes (This step may be skipped, this takes awhile)
+# P0 = np.zeros(np.shape(X)) # the P0 = 0 boundary conditions are already set
+# P1 = np.zeros( np.shape(X))# the P1 = 0 boundary conditions set in here 
+P1 = Gaussian(X, Y, 0.5, 0.5, 1, 0.1, 0.1) -0.1
+P0 = Gaussian(X, Y, 0.5, 0.5, 1, 0.1, 0.1)
 
-I_want_to_compute_everything = True 
+P_prev = np.copy(P0)
+P = np.copy(P1) 
 
-if I_want_to_compute_everything:
 
-    # Find eigenmodes
-    eigenval, eigenvec = scipy.linalg.eig(D)
-    print(eigenval)
-    np.savez('output_file', eigenval=eigenval, eigenvec=eigenvec, D=D)
 
-else: 
-    npzfile = np.load('output_file.npz') 
-    eigenval = npzfile['eigenval']
-    eigenvec = npzfile['eigenvec']    
+# D0 = np.zeros((3,3))
+# D1 = np.copy(D0)
+# D0[1][1] = 1
+# D1[1][1] = 1 -0.1
+# Stack = []
+# Stack.append(D0)
+# Stack.append(D1)
+# for i in range(1, len(time)): 
+#     print(i)
+#     NextD = GetNextP(D1, D0, dt, dx, 1)
+#     print(NextD)
+#     Stack.append(NextD)
+# # F = np.zeros((nx,ny))
+# # F[sx][sy] = 60
 
-# %% Now we  process them and reorder these modes: 
-#omega_square = omega_square/((sigma * (dx)**2 )/T )
-#omega_square = np.abs(omega_square)
+# Pstack = np.zeros((len(time), nx, ny)) # create stack array 
 
+
+
+
+
+#Pstack = P_prev
+Pstack = np.array([np.copy(P_prev)])
+Pstack = np.vstack((Pstack, np.array([np.copy(P)]))) #first index correspending to time
+
+for i in range(1,len(time)):
+    P_new = 2 * P - P_prev + (v ** 2) * (dt ** 2) * (FDLaplaceEstimate(P, dx))
+    # P_next = GetNextP(Pstack[i],Pstack[i-1], dx, dt, v)
+    Pstack = np.vstack((Pstack, np.array([P_new])))
+    P_prev = np.copy(P)
+    P = np.copy(P_new)
     
+    
+# plt.figure()
+# plt.title("First")
+# plt.imshow(Pstack[1])
+# plt.colorbar()
 
-omega = np.real(eigenval)/ np.sqrt(T/(sigma*(dx)**2))
-# %%
-# # plt.rc('text', usetex=True)             # use LaTeX for text
-# # plt.rc('font', family='serif')          # use serif font
-# # plt.rcParams.update({'font.size': 10})  # set font size 
+# plt.figure()
+# plt.title("Second")
+# plt.imshow(Pstack[2])
+# plt.colorbar()
+
+
+# plt.figure()
+# plt.title("3")
+# plt.imshow(Pstack[3])
+# plt.colorbar()
+
+# plt.figure()
+# plt.title("4")
+# plt.imshow(Pstack[4])
+# plt.colorbar()
+
+# plt.figure()
+# plt.title("5")
+# plt.imshow(Pstack[5])
+# plt.colorbar()
+
+# plt.figure()
+# plt.title("first")
+# plt.imshow(Pstack[1])
+# plt.colorbar()
+
+# # %%
+# # # plt.rc('text', usetex=True)             # use LaTeX for text
+# # # plt.rc('font', family='serif')          # use serif font
+# # # plt.rcParams.update({'font.size': 10})  # set font size 
 # fig = plt.figure()
 # ax = plt.axes(projection='3d')
-# ax.plot_wireframe(X, Y, )
-# ax.set_title("Side View")
+# ax.plot_wireframe(X, Y, Pstack[0])
+# ax.set_title("First")
+# #ax.set_xticks([0, 1])
+# #ax.set_yticks([0, 1])
+# ax.set_zticks([0])
+# ax.set_xlabel('x')
+# ax.set_ylabel('y')
+# #ax.set_zlabel('z')
+# #ax.view_init(90, 0)
+
+
+# fig = plt.figure()
+# ax = plt.axes(projection='3d')
+# ax.plot_surface(X, Y, Pstack[5])
+# ax.set_title("Second")
+# #ax.set_xticks([0, 1])
+# #ax.set_yticks([0, 1])
+# #ax.set_zticks([0])
+# ax.set_xlabel('x')
+# ax.set_ylabel('y')
+# ax.set_zlabel('z')
+
+
+# fig = plt.figure()
+# ax = plt.axes(projection='3d')
+# ax.plot_surface(X, Y, Pstack[30])
+# ax.set_title("Second")
 # #ax.set_xticks([0, 1])
 # #ax.set_yticks([0, 1])
 # ax.set_zticks([0])
 # ax.set_xlabel('x')
 # ax.set_ylabel('y')
 # ax.set_zlabel('z')
-# #ax.view_init(90, 0)
-# plt.savefig('Neutral_Square.pdf')
-y = np.arange(1, (N**2)+1)
-plt.figure
-plt.plot(omega)
 
+
+
+# fig = plt.figure()
+# ax = plt.axes(projection='3d')
+# ax.plot_surface(X, Y, Pstack[50])
+# ax.set_title("Second")
+# #ax.set_xticks([0, 1])
+# #ax.set_yticks([0, 1])
+# ax.set_zticks([0])
+# ax.set_xlabel('x')
+# ax.set_ylabel('y')
+# ax.set_zlabel('z')
