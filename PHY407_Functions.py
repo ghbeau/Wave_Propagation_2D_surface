@@ -2,48 +2,12 @@
 Project PHY407
 @author: Genevieve Beauregard
 
-This is just the script to generate the square plate
+These are just some of the functions.
 """
 import numpy as np
 import matplotlib.pyplot as plt
 from mpl_toolkits.mplot3d import Axes3D
-
-
-
-#def getNextP(P_prev, P_now, F_now, dx, dt, v, boundary=True,): 
-    
-    # # This is a non-vectorized scheme I wrote. Its simple but extremely slow
-    # # and does not work very well
-    # # Initiazing arrays
-    # shape = np.shape(P_prev)
-    # P_next = np.zeros(shape)
-    
-    # factor = ((dt/dx)**2) * (v**2) # the multiplicative fact
-
-    # # Populate array and sum
-    # for i in range(1, shape[0]-1) :
-    #     for j in range(1,shape[1]-1):
-            
-    #         # gross sum is the equation used to calculate P_next
-    #         gross_sum = (P_now[i+1][j] + P_now[i-1][j] + P_now[i][j-1] +\
-    #             P_now[i][j])* factor
-    
-        
-            
-    #         gross_sum += (dt**2) * F_now[i][j] + 2 * P_now[i,j] - P_prev[i][j]
-    
-    #         P_next[i,j] = gross_sum
-    
-    # if boundary:
-    #     P_next[0,:] = 0
-    #     P_next[-1,:] = 0
-    #     P_next[:,0] = 0
-    #     P_next[:,-1] = 0
-    # print(np.shape(P_next))
-    
-    # return P_next
-    
-    
+import numpy.fft as fft 
 
 def Gaussian(XX, YY, X0, Y0, A, sigmax, sigmay):
     """
@@ -65,9 +29,8 @@ def Gaussian(XX, YY, X0, Y0, A, sigmax, sigmay):
     return A*np.exp((-0.5)*(((XX - X0)/sigmax)**2 +((YY -Y0)*(1/sigmay))**2))
 
 def FDLaplaceEstimate(P, dx):
-    """This will calculate the finite difference version of laplace.
-    This may be replaced by a built in function scipy.sparse.csgraph.laplacian¶
-
+    """This will calculate the finite difference version of laplace for 
+    neumann boundary conditions. 
     Input:
         P_now: Current pressure array, array NxN
         dx: grid step (we assume same dx = dy), scalar
@@ -113,11 +76,8 @@ def GetNextP(P_now, P_prev, dt, dx, v,  F_now=0):
     # Get laplacian estimate
     P_nowLaplace = FDLaplaceEstimate(P_now, dx)
     P_next = (v**2) * (dt**2 )* P_nowLaplace + (dt**2) * F_now +\
-        2* P_now - P_prev
-    # P_next[:,0] = 0
-    # P_next[:,-1] = 0
-    # P_next[0,:] = 0
-    # P_next[-1,:] = 0
+        2* P_now - P_prev # forward time
     return P_next
+
 
     
