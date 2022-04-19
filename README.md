@@ -5,4 +5,4 @@ Later tried to implemented an absorbing boundary to mimic open boundaries by int
 Warning: the file may save images/animations. Check comments. 
 
 
-PHY407_FinalReport.pdf was my final report for the computational physics course PHY407 at University of Toronto in 2020.
+PHY407_FinalReport.pdf was my final report for the computational physics course PHY407 at University of Toronto.
